@@ -1,0 +1,21 @@
+# build output
+dll/out/
+setup/out/
+dist/
+.cache/
+__pycache__/
+*.pyc
+# converter work folders
+converter/m2conv/work/
+converter/m2conv/bin/
+# never commit game data
+*.wad
+*.wad_*
+*.block
+*.iso
+*.doh
+*.pws
+*.xex
+*.xexp
+*.pkl
+*.bin
