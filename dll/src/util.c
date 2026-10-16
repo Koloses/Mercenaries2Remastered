@@ -40,6 +40,18 @@ static const char g_defaultIni[] =
 "Anisotropic=16\r\n"
 "; SMAA on the finished frame\r\n"
 "SMAA=1\r\n"
+"; Xbox 360 rendering: shader fixes (normal maps, shadow filtering on vegetation / decals / water, lighting\r\n"
+"; without the PC clamps), linear HDR bloom, soft particles, fire on burning vegetation and wrecks, model\r\n"
+"; shadows of far trees, the 1.1 paper animations\r\n"
+"XboxShaders=1\r\n"
+"LinearBloom=1\r\n"
+"SoftParticles=1\r\n"
+"EmitterFix=1\r\n"
+"ModeledTreeShadows=1\r\n"
+"PaperAnimations=1\r\n"
+"; Xbox depth-aware edge anti-aliasing: -1 = only while the game's Anti-Aliasing is off (the Xbox has no MSAA),\r\n"
+"; 1 = always, 0 = off\r\n"
+"DepthAA=-1\r\n"
 "; draw distances: the defaults are tested; higher values load more of the world at once and can run the game\r\n"
 "; out of memory or into engine limits (crashes, freezes, missing objects) and cost frame rate\r\n"
 "; draw distance of grass, bushes and leaves (x game)\r\n"
@@ -370,8 +382,29 @@ int Expect(DWORD addr, const char *hex)
     return 1;
 }
 
+#ifdef M2R_SHOT
+/* developer builds: [Debug] PatchLo / PatchHi (hex) limit which exe addresses are patched, to find a bad patch */
+static int PatchAllowed(DWORD addr)
+{
+    static DWORD lo = 1, hi; static int skipped;
+    if (lo == 1) {
+        char b[32];
+        IniStr("Debug", "PatchLo", "0", b, sizeof b); lo = strtoul(b, NULL, 16);
+        IniStr("Debug", "PatchHi", "FFFFFFFF", b, sizeof b); hi = strtoul(b, NULL, 16);
+        if (lo == 1) lo = 0;
+        if (lo || hi != 0xFFFFFFFF) Log("debug: only exe patches in %08lX-%08lX", lo, hi);
+    }
+    if (addr < 0x400000 || addr >= 0x3800000 || (addr >= lo && addr < hi)) return 1;
+    if (++skipped <= 400) Log("debug: patch at %08lX skipped", addr);
+    return 0;
+}
+#endif
+
 void WriteMem(DWORD addr, const void *src, size_t n)
 {
+#ifdef M2R_SHOT
+    if (!PatchAllowed(addr)) return;
+#endif
     DWORD old;
     VirtualProtect((void *)addr, n, PAGE_EXECUTE_READWRITE, &old);
     memcpy((void *)addr, src, n);

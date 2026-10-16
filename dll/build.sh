@@ -7,9 +7,9 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p out
-SRCS="main.c util.c perf.c d3d.c pad.c cam.c online.c vehicle.c aim.c content.c prompts.c promptsgfx.c dxt.c gfx.c deform.c vspatch.c lod.c pickup.c post.c mem.c fps.c cull.c statecache.c securom.c forest.c shaderwarm.c cheats.c water.c stream.c drawpool.c msaa.c jitter.c movie.c assettable.c"
+SRCS="main.c util.c perf.c d3d.c pad.c cam.c online.c vehicle.c aim.c content.c prompts.c promptsgfx.c dxt.c gfx.c deform.c vspatch.c lod.c pickup.c post.c mem.c fps.c cull.c statecache.c securom.c forest.c shaderwarm.c cheats.c water.c stream.c drawpool.c msaa.c jitter.c movie.c assettable.c softpart.c paper.c bloom.c emitfix.c xbshader.c treeshadow.c depthaa.c"
 # M2R_SHOT=1 ./build.sh: developer build with the screenshot key ([Display] ScreenshotKey, F11)
-SHOT=""; [ "$M2R_SHOT" = 1 ] && SHOT="-DM2R_SHOT shot.c"
+SHOT=""; [ "$M2R_SHOT" = 1 ] && SHOT="-DM2R_SHOT shot.c dump.c fireprobe.c msm.c"
 CC="i686-w64-mingw32-gcc -O2 -Wall -Wextra -Wno-unused-parameter -Wno-cast-function-type -shared -static-libgcc"
 core() {   # core <srcdir> <out> [defines]
     ( cd "$1" && $CC -o "$2" $SRCS $SHOT $3 dinput8.def -Wl,--enable-stdcall-fixup -lwinmm -lm -s )

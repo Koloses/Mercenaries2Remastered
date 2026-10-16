@@ -78,6 +78,7 @@ static IUnknownVtbl kEntVt = {E_QI, E_AddRef, E_Release};
 static D3DMULTISAMPLE_TYPE g_level;           /* in effect, 0 = off */
 int g_aaFix = 1;                               /* [Fixes] AAFix */
 int g_gameMsaa;                                /* the game's Anti-Aliasing option (multisample type) */
+int MsaaLevel(void);
 static int g_okFmt;                            /* both scene formats support g_level */
 static UINT g_bbW, g_bbH;
 static IDirect3DSurface9 *g_rt[4], *g_ds;      /* the game's bindings (referenced, like the device would) */
@@ -394,3 +395,4 @@ void MsaaDevice(IDirect3DDevice9 *d)
     g_sync = 1;
     Log("msaa: device hooks on");
 }
+int MsaaLevel(void) { return (int)g_level; }

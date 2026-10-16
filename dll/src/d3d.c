@@ -330,6 +330,11 @@ static HRESULT STDMETHODCALLTYPE hk_CreateDevice(IDirect3D9 *d3d, UINT ad, D3DDE
         PostDevice(*out);
         { void WaterDevice(IDirect3DDevice9 *); WaterDevice(*out); }
         { void ShaderWarmDevice(IDirect3DDevice9 *); ShaderWarmDevice(*out); }
+        { void SoftDevice(IDirect3DDevice9 *); SoftDevice(*out); }   /* after ShaderWarm: sees the game's own shader code */
+        { void BloomDevice(IDirect3DDevice9 *); BloomDevice(*out); }
+        { void XbShaderDevice(IDirect3DDevice9 *); XbShaderDevice(*out); }
+        { void TreeShadowDevice(IDirect3DDevice9 *); TreeShadowDevice(*out); }
+        { void DepthAADevice(IDirect3DDevice9 *); DepthAADevice(*out); }
         { void StateCacheDevice(IDirect3DDevice9 *); StateCacheDevice(*out); }
     }
     return hr;

@@ -38,6 +38,11 @@ After installing
     THATSMYCAR vehicles, FASHIONVICTIM costumes, HOOKMEUP grappling hook.
     One word per PDA visit.
   - Keys: F9 FPS counter, F10 colour grading on/off.
+  - Xbox 360 rendering ([Graphics] in the ini): correct normal maps, filtered
+    shadows on vegetation, unclamped lighting, linear HDR bloom, soft particles,
+    fire on burning bushes, trees and wrecks, model shadows of far trees, paper
+    sheets in the streets, and the Xbox edge anti-aliasing (DepthAA, used while
+    the game's Anti-Aliasing is off; the Xbox has no MSAA).
   - Aim assist (gamepad): hip fire marks the enemy nearest the view centre in red and
     sends the shots to it; aiming down the sight snaps to the enemy nearest the
     reticle. The game's own aim magnetism (on foot and on mounted guns) is off.

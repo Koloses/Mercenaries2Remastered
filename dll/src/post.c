@@ -568,7 +568,8 @@ static HRESULT STDMETHODCALLTYPE hk_SRT(IDirect3DDevice9 *d, DWORD i, IDirect3DS
                 }
                 g_depthThisFrame = 1;
             }
-            if (!g_done && g_nsc && sd.Format == D3DFMT_A16B16G16R16 && sd.Width == g_bw / 2) {
+            if (!g_done && g_nsc && (sd.Format == D3DFMT_A16B16G16R16 || sd.Format == D3DFMT_A16B16G16R16F) && sd.Width == g_bw / 2) {
+                /* the bloom chain starts (16-bit integer targets, FP16 with [Graphics] LinearBloom) */
                 g_done = 1; g_postInScene = 0; g_postInDepth = 0;
                 RunPost(d);
             }

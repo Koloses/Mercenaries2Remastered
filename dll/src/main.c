@@ -539,6 +539,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID res)
         { void FpsInit(void); FpsInit(); }
 #ifdef M2R_SHOT
         { void ShotInit(void); ShotInit(); }
+        { void DumpInit(void); DumpInit(); }
 #endif
         { void ShaderWarmInit(void); ShaderWarmInit(); }
         { void ForestInit(void); ForestInit(); }
@@ -567,6 +568,13 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID res)
             { void CheatsInit(void); CheatsInit(); }
             { void JitterInit(void); JitterInit(); }
             { void MovieInit(void); MovieInit(); }
+            { void PaperInit(void); PaperInit(); }
+            { void EmitFixInit(void); EmitFixInit(); }
+            { void TreeShadowInit(void); TreeShadowInit(); }
+            { void BloomInit(void); BloomInit(); }
+#ifdef M2R_SHOT
+            { void FireProbeInit(void); FireProbeInit(); }
+#endif
         }
     }
     return TRUE;
