@@ -27,6 +27,7 @@
 #define TS_LOOP 0x4A1D42u     /* cmp eax,[edi+0x6B0] (next layer) */
 #define TS_CUR  0x1163714u
 #define TS_TYPES 0x1174A30u    /* tree type array (0x710 each) */
+#define TS_NTYPES 0xE8F734u
 #define TS_FADEVB 0xE8F714u    /* fade-zone billboard buffer: [0] view index, views of 0x18 at +4 {desc, VB, decl} */
 #define TS_FADESTART 0xE8F878u /* per type: first vertex / vertex count (6 per tree) */
 #define TS_FADECOUNT 0xE8F918u
@@ -37,6 +38,7 @@
 #define TS_LOOP 0x4A1CE2u
 #define TS_CUR  0x1164714u
 #define TS_TYPES 0x1175A30u
+#define TS_NTYPES 0xE90734u
 #define TS_FADEVB 0xE90714u
 #define TS_FADESTART 0xE90878u
 #define TS_FADECOUNT 0xE90918u
@@ -152,8 +154,15 @@ static DWORD CodeLen(const DWORD *c)
 static HRESULT STDMETHODCALLTYPE hk_CreateVS(IDirect3DDevice9 *d, const DWORD *c, IDirect3DVertexShader9 **o)
 {
     HRESULT hr = o_CreateVS(d, c, o);
-    if (SUCCEEDED(hr) && o && *o && c && !IsBadReadPtr(c, 8) && CodeLen(c) == TS_VP_LEN && Crc32((const BYTE *)c, TS_VP_LEN) == TS_VP_CRC && g_nbbVS < 4)
-        g_bbVS[g_nbbVS++] = *o;
+    if (SUCCEEDED(hr) && o && *o) {
+        int bb = c && !IsBadReadPtr(c, 8) && CodeLen(c) == TS_VP_LEN && Crc32((const BYTE *)c, TS_VP_LEN) == TS_VP_CRC;
+        for (int i = 0; i < g_nbbVS; i++) if (g_bbVS[i] == *o) g_bbVS[i] = NULL;   /* address of a freed shader reused */
+        if (bb) {
+            int i = 0;
+            while (i < g_nbbVS && g_bbVS[i]) i++;
+            if (i < 4) { g_bbVS[i] = *o; if (i == g_nbbVS) g_nbbVS++; }
+        }
+    }
     return hr;
 }
 static HRESULT STDMETHODCALLTYPE hk_SetVS(IDirect3DDevice9 *d, IDirect3DVertexShader9 *s) { g_curVS = s; return o_SetVS(d, s); }
@@ -181,7 +190,7 @@ static int Setup(IDirect3DDevice9 *d, UINT v)
     }
     return 1;
 }
-static int IsBbVS(IDirect3DVertexShader9 *s) { for (int i = 0; i < g_nbbVS; i++) if (g_bbVS[i] == s) return 1; return 0; }
+static int IsBbVS(IDirect3DVertexShader9 *s) { for (int i = 0; i < g_nbbVS; i++) if (s && g_bbVS[i] == s) return 1; return 0; }
 
 static HRESULT STDMETHODCALLTYPE hk_DP(IDirect3DDevice9 *d, D3DPRIMITIVETYPE pt, UINT sv, UINT pc)
 {
@@ -194,12 +203,21 @@ static HRESULT STDMETHODCALLTYPE hk_DP(IDirect3DDevice9 *d, D3DPRIMITIVETYPE pt,
         if (o && r->start == sv && r->count == cnt) { obj = o; fvb = r->fvb; fs = r->fstart; fc = r->fcount; break; }
     }
     if (!obj) return o_DP(d, pt, sv, pc);                       /* a billboard (card) shadow */
+    {   /* the type must still exist (the forest is unloaded on travel) and the bound shader must really be ours:
+           g_curVS misses state block applies, so the device is asked (and that reference is what is restored) */
+        BYTE *types = *(BYTE **)TS_TYPES; DWORD nt = *(DWORD *)TS_NTYPES;
+        if (!types || obj < types || obj >= types + nt * 0x710 || (DWORD)(obj - types) % 0x710 || !TypeOk(obj)) return o_DP(d, pt, sv, pc);
+    }
+    IDirect3DVertexShader9 *vs = NULL;
+    if (FAILED(IDirect3DDevice9_GetVertexShader(d, &vs)) || !vs) return o_DP(d, pt, sv, pc);
+    if (!IsBbVS(vs)) { IDirect3DVertexShader9_Release(vs); return o_DP(d, pt, sv, pc); }
     BYTE *desc = *(BYTE **)(obj + 0x6B4);
     UINT V = *(DWORD *)(desc + 0xC), N = cnt / 6;
     IDirect3DVertexBuffer9 *mvb = *(IDirect3DVertexBuffer9 **)(obj + 0x6B8);
     IDirect3DVertexBuffer9 *bb = NULL; UINT off = 0, stride = 0;
     if (V > 65535 || !Setup(d, V) || FAILED(IDirect3DDevice9_GetStreamSource(d, 0, &bb, &off, &stride)) || !bb || stride != 16) {
         if (bb) IDirect3DVertexBuffer9_Release(bb);
+        IDirect3DVertexShader9_Release(vs);
         if (!g_dropped++) Log("tree shadows: modeled draw dropped (stride %u, V %u)", stride, V);
         return D3D_OK;
     }
@@ -210,7 +228,6 @@ static HRESULT STDMETHODCALLTYPE hk_DP(IDirect3DDevice9 *d, D3DPRIMITIVETYPE pt,
     IDirect3DDevice9_GetStreamSource(d, 1, &s1, &off1, &st1);
     IDirect3DDevice9_GetStreamSourceFreq(d, 0, &f0);
     IDirect3DDevice9_GetStreamSourceFreq(d, 1, &f1);
-    IDirect3DVertexShader9 *vs = g_curVS;
 
     IDirect3DDevice9_SetVertexDeclaration(d, g_decl);
     IDirect3DDevice9_SetVertexShader(d, g_instVS);
@@ -231,6 +248,7 @@ static HRESULT STDMETHODCALLTYPE hk_DP(IDirect3DDevice9 *d, D3DPRIMITIVETYPE pt,
     IDirect3DDevice9_SetStreamSource(d, 0, bb, off, stride);
     IDirect3DDevice9_SetIndices(d, ib);
     IDirect3DDevice9_SetVertexShader(d, vs);
+    IDirect3DVertexShader9_Release(vs);
     IDirect3DDevice9_SetVertexDeclaration(d, decl);
     if (decl) IDirect3DVertexDeclaration9_Release(decl);
     if (ib) IDirect3DIndexBuffer9_Release(ib);
