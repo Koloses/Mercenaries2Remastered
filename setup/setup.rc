@@ -12,8 +12,8 @@ BEGIN
     BEGIN
       VALUE "FileDescription", "Mercenaries2Remastered Setup"
       VALUE "ProductName", "Mercenaries2Remastered"
-      VALUE "FileVersion", "Beta 1"
-      VALUE "ProductVersion", "Beta 1"
+      VALUE "FileVersion", "Beta 2"
+      VALUE "ProductVersion", "Beta 2"
       VALUE "LegalCopyright", "Copyright (C) 2026 the Mercenaries2Remastered authors, GPL-3.0-or-later"
     END
   END

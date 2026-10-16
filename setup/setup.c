@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <wchar.h>
 
-#define APP_TITLE L"Mercenaries2Remastered Beta 1 Setup"
+#define APP_TITLE L"Mercenaries2Remastered Beta 2 Setup"
 /* the supported Mercenaries2.exe builds and the same files made large address aware (header flag + PE checksum) */
 static const char *const EXE_MD5[]  = {"857b3387d54774a32c1328effb5de4d4", "5b9976f162e050f4adcc51bb997ba97f"};   /* 1.0, 1.1 */
 static const char *const EXE4_MD5[] = {"2e0d3a41df30c59714444c3a84c3f372", "4f90b0560d41ea407cf65224c1177334"};

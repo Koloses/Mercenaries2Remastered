@@ -1,4 +1,4 @@
-Mercenaries2Remastered Beta 1 - Mercenaries 2: World in Flames (PC)
+Mercenaries2Remastered Beta 2 - Mercenaries 2: World in Flames (PC)
 ===================================================================
 
 Works with Mercenaries2.exe 1.0 and 1.1 (the versions without the disc check).
@@ -28,6 +28,9 @@ original exe back.
 After installing
   - DLC: Extras > Downloadable Content.
   - DLC outfits (Obaminator, Sarahcuda, Gramps) are in the PMC wardrobe.
+  - Mission briefings keep the outfit you wear (except Obaminator, Sarahcuda
+    and the chicken suit, which still switch to the default outfit).
+  - The transport (landing zone) map is shown in the Xbox 850x720 box.
   - The promo outfits that needed an EA online code (Chris Vacation, Jennifer
     Rebel, Mattias MetalHead) are unlocked.
   - Settings: Mercenaries2Remastered.ini in the game folder (borderless window, camera,
@@ -38,7 +41,7 @@ After installing
     THATSMYCAR vehicles, FASHIONVICTIM costumes, HOOKMEUP grappling hook.
     One word per PDA visit.
   - Keys: F9 FPS counter, F10 colour grading on/off.
-  - Xbox 360 rendering ([Graphics] in the ini): correct normal maps, filtered
+  - Graphics as on the Xbox 360 ([Graphics] in the ini): correct normal maps, filtered
     shadows on vegetation, unclamped lighting, linear HDR bloom, soft particles,
     fire on burning bushes, trees and wrecks, model shadows of far trees, paper
     sheets in the streets, and the Xbox edge anti-aliasing (DepthAA, used while

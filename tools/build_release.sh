@@ -1,7 +1,7 @@
 #!/bin/sh
 # Mercenaries2Remastered - Copyright (C) 2026 the Mercenaries2Remastered authors (see AUTHORS).
 # Licensed under the GNU GPL version 3 or later with an additional permission (see LICENSE, LICENSE-EXCEPTION).
-# Builds dist/Mercenaries2Remastered-Setup and dist/Mercenaries2Remastered-<version>-Setup.zip (Beta 1 -> Beta1)
+# Builds dist/Mercenaries2Remastered-Setup and dist/Mercenaries2Remastered-<version>-Setup.zip (Beta 2 -> Beta2)
 # Needs: i686-w64-mingw32-gcc, x86_64-w64-mingw32-gcc (+ windres), python3, pip, curl, zip
 set -e
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

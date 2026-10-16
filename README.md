@@ -1,4 +1,4 @@
-# Mercenaries2Remastered (Beta 1)
+# Mercenaries2Remastered (Beta 2)
 
 Fixes, modern-system tweaks and gameplay improvements for **Mercenaries 2: World in Flames (PC)**, plus an
 optional port of the Xbox 360 **Title Update 4** and the **"Blow It Up Again Pack"** DLC, built on the player's
@@ -18,9 +18,21 @@ Supported game builds (`Mercenaries2.exe` without the disc check):
 
 `dinput8.dll` loads the mod built for the running exe from `Mercenaries2Remastered\`. With other builds only the file fix is active.
 
+## What's new in Beta 2
+
+* **Graphics as on the Xbox 360**: the PC shaders were compared with the Xbox 360 ones and the differences ported back:
+  correct normal maps, filtered sun shadows on vegetation, decals and water, lighting without the PC-only clamps,
+  linear HDR bloom (fire, explosions and lights glow again), soft particles, fire on burning bushes, trees and
+  wrecks, model shadows of far trees, the Xbox motion-blur mask, and the Xbox depth-aware edge anti-aliasing
+  (used while the game's Anti-Aliasing is off, as on the Xbox, which has no MSAA). See *Graphics* below.
+* **Game 1.1**: full support (SecuROM cells the 1.1 build resolves late, Havok class tables for the converter);
+  the paper sheets that 1.1 removed blow through the streets again.
+* **Interface**: the transport (landing zone) map is shown in the Xbox 850x720 box like the PDA instead of
+  stretched across the screen.
+
 ## Installing
 
-Download `Mercenaries2Remastered-Beta1-Setup.zip` from Releases, unzip it anywhere and run `Mercenaries2RemasteredSetup.exe`:
+Download `Mercenaries2Remastered-Beta2-Setup.zip` from Releases, unzip it anywhere and run `Mercenaries2RemasteredSetup.exe`:
 
 * **Mod only**: the DLL and its settings.
 * **Mod + Xbox 360 TU4 and DLC**: also converts the Xbox 360 content. Select your own files:
@@ -53,13 +65,13 @@ in `Mercenaries2Remastered.log` (the last five runs are kept as `.1.log` ... `.5
 | **Vehicles** | Steering speed/inertia, high-speed steering, optional arcade handling (grip, yaw damping, centre of mass). Mass, power and top speed are untouched. |
 | **Vehicle deformation** | Cars, helicopters, jets and boats dent where they are hit (crashes, rams, explosions): the impact is read from the vehicle's physics, the dents are applied in a patched copy of the game's vertex shaders (position, normals, creases), capped so cabins stay clear of the occupants. Detachable parts dent with the body; windows break open where a dent reaches them (`[Deformation]`). Tanks and motorcycles keep their shape. |
 | **Tyre marks** | Skid marks where tyres slide (handbrake, locked brakes, wheelspin, drifting), projected onto the ground from any camera angle and fading out over two minutes (`[TyreMarks]`). |
-| **Graphics** | Forced anisotropic filtering, SMAA 1x and colour grading on the final frame (F10 toggles); grass, trees, objects, model detail, terrain detail and the streamed world reach further, far clip plane x2 (`[Graphics]`, `[Color]`). Raising the distance settings above the defaults is not recommended: more of the world is loaded at once, which can run the 32-bit game out of memory or into engine limits (crashes, freezes, missing objects) and lowers the frame rate. F9 FPS counter. |
-| **Xbox 360 rendering** | Brought back from the Xbox 360 build (its shaders were disassembled and compared with the PC ones): normal maps decoded correctly (the PC shaders flattened or over-tilted every normal-mapped surface); 2x2 filtered sun shadows on grass, bushes, trees, decals and water instead of one hard sample; direct lighting without the PC-only clamp to 1 and the Xbox colour/eye-adaptation limits; linear HDR bloom in FP16 targets (the PC packed the bloom into 16-bit integers and lost most of the glow of fire, explosions and lights); soft particles (smoke and fire fade where they meet the ground and walls, from the scene depth); fire on burning bushes, trees and wrecks (the PC never computed the surface the flames are emitted from); model sun shadows of far trees and trees in the fade zone instead of flat cards; the Xbox motion-blur mask; the paper sheets blowing through the streets (removed in patch 1.1); the Xbox depth-aware edge anti-aliasing while the game's Anti-Aliasing is off (`[Graphics] XboxShaders, LinearBloom, SoftParticles, EmitterFix, ModeledTreeShadows, PaperAnimations, DepthAA`). |
+| **Graphics** | Forced anisotropic filtering, SMAA 1x and colour grading on the final frame (F10 toggles); grass, trees, objects, model detail, terrain detail and the streamed world reach further, far clip plane x2 (`[Graphics]`, `[Color]`). Raising the distance settings above the defaults is not recommended: more of the world is loaded at once, which can run the 32-bit game out of memory or into engine limits (crashes, freezes, missing objects) and lowers the frame rate. F9 FPS counter. Rendering as on the Xbox 360 (its shaders were disassembled and compared with the PC ones): normal maps decoded correctly (the PC shaders flattened or over-tilted every normal-mapped surface); 2x2 filtered sun shadows on grass, bushes, trees, decals and water instead of one hard sample; direct lighting without the PC-only clamp to 1 and the Xbox colour/eye-adaptation limits; linear HDR bloom in FP16 targets (the PC packed the bloom into 16-bit integers and lost most of the glow of fire, explosions and lights); soft particles (smoke and fire fade where they meet the ground and walls, from the scene depth); fire on burning bushes, trees and wrecks (the PC never computed the surface the flames are emitted from); model sun shadows of far trees and trees in the fade zone instead of flat cards; the Xbox motion-blur mask; the paper sheets blowing through the streets (removed in patch 1.1); the Xbox depth-aware edge anti-aliasing while the game's Anti-Aliasing is off (`[Graphics] XboxShaders, LinearBloom, SoftParticles, EmitterFix, ModeledTreeShadows, PaperAnimations, DepthAA`). |
+| **Interface** | The transport (landing zone) map opens in the centred 850x720 box the Xbox uses (the PC stretched it across 16:9 by 1.5x); the PDA already does with the TU4 content. HUD and pause screen are laid out as on the Xbox. |
 | **Gameplay** | Walking over a dropped weapon that uses the ammo of one of your guns (also the holstered one) takes the ammo and removes the weapon, no button or animation; a full gun takes nothing (`[Gameplay] AutoAmmoPickup`). |
 | **Fixes** | The Anti-Aliasing option works in the borderless window and on the 3D scene (`AAFix`); movies no longer go black after skipping one (`MovieFix`); stowed weapons, holsters and pouches no longer twitch above 30 fps (`TwitchFix`); water on native NVIDIA drivers. |
 | **Cheats** | Always available: the cheats from the TU4 update, typed as words in the PDA on PC (see [Cheats](#cheats)). Gamepad codes work as on console. |
 | **Offline** | Answers the "play online?" question with offline (the servers are gone). The promo outfits that needed an EA online code (Chris Vacation, Jennifer Rebel, Mattias MetalHead) are unlocked in the wardrobe. |
-| **TU4 + DLC** | Mounts the converted content. The DLC is started from Extras > Downloadable Content like on Xbox 360 (own level and master script). The DLC outfits (Obama, Palin, Grandpa Mattias) are always available in the campaign wardrobe, with their names and voice lines. Gamepad navigation to the DLC entry in Extras. |
+| **TU4 + DLC** | Mounts the converted content. The DLC is started from Extras > Downloadable Content like on Xbox 360 (own level and master script). The DLC outfits (Obama, Palin, Grandpa Mattias) are always available in the campaign wardrobe, with their names and voice lines. Mission briefings keep the outfit you wear instead of switching back to the default one (the game did that for every outfit flagged for no briefings); only the Obama and Palin outfits and the chicken suit still switch, as their faces and shape look odd in the briefing scenes. Gamepad navigation to the DLC entry in Extras. |
 | **Engine fixes** | Extra string tables: the game stored each new table in the wrong slot, so only the last one added was searched. Asset managers (scrub models and three others) hold at most 256 loaded assets and froze the game when one more was added (e.g. after a helicopter transfer); assets beyond 256 go to an overflow list. The texture pool handed out free textures of a different size with the same power-of-two class (a 1024x1024 texture for a 1920x1080 movie, crash when the menu movie started after a DLC race); only exact sizes are reused. |
 | **Lua** | The TU4 and DLC scripts call script functions the PC game does not have; they are added: `Sys.WereCheatsUsed` / `SetCheatsUsed` (cheats), `Object.GetInfiniteAmmo`, `Human.SetChatterSet` (DLC outfit voices), `Hud.Set` / `GetMapCorrectionOffset` (DLC map), `Sys.Get` / `SetMasterScriptName`, `RequiredAsset`, `AddStringDb`, `Sound.OpenStreamFile` / `CloseStreamFile`, `Net.DLCGetMountPoint` and `Net.GetUserName` (DLC). Xbox Live leaderboards (`Net.Leaderboard*`, DLC mission scores) and `Hud.ReleaseLeftStickControl` (Xbox support menu focus) do nothing. Script errors and `Debug.Printf` go to the log; crashes are logged with registers and stack. |
 | **Plugins** | `*.asi` files from the game folder, `scripts\` and `plugins\` are loaded at start. |
@@ -99,7 +111,7 @@ dll/         dinput8.dll proxy (C, MinGW)         dll/build.sh
                perf.c       CPU usage fixes
                cull.c statecache.c securom.c forest.c shaderwarm.c drawpool.c stream.c   performance
                post.c       tyre marks
-               xbshader.c bloom.c softpart.c emitfix.c treeshadow.c depthaa.c paper.c   Xbox 360 rendering
+               xbshader.c bloom.c softpart.c emitfix.c treeshadow.c depthaa.c paper.c   graphics as on the Xbox 360
                             (*_shaders.h, xbshader_patches.h: generated shader bytecode)
                fireprobe.c msm.c dump.c   developer-build diagnostics (M2R_SHOT=1)
                cheats.c     typed PDA cheat words
@@ -133,7 +145,7 @@ tools/build_release.sh
 ```
 
 This builds the DLL, the installer and the IMA encoder, downloads the embeddable Python 3.11 for Windows,
-numpy, Pillow, capstone and ffmpeg (from PyPI / python.org), and writes `dist/Mercenaries2Remastered-Beta1-Setup.zip`.
+numpy, Pillow, capstone and ffmpeg (from PyPI / python.org), and writes `dist/Mercenaries2Remastered-Beta2-Setup.zip`.
 
 The DLL alone: `dll/build.sh` (i686-w64-mingw32-gcc) -> `dll/out/dinput8.dll` (loader) and
 `dll/out/Mercenaries2Remastered-1.0.dll` / `-1.1.dll`. The sources address the 1.0 exe; the 1.1 DLL is compiled from a copy
