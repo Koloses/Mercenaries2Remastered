@@ -7,6 +7,7 @@
 #define M2R_VERSION "Beta 1"
 /* The sources address Mercenaries2.exe 1.0 (Aug 13 2008). The 1.1 build (Sep 12 2008) is compiled from a copy
  * made by tools/retarget.py with v11.map (every game address and changed byte pattern), with M2R_GAME11 set. */
+#define A11(x) (x)                 /* an address in the 1.1 exe, for code under #ifdef M2R_GAME11 (not retargeted) */
 #ifdef M2R_GAME11
 #define M2R_GAME "1.1"
 #else

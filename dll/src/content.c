@@ -458,6 +458,27 @@ __attribute__((naked)) static void InvStub(void)
         "movl $0, _g_inInv\n\tret $12\n"
         "1:\tjmp *_o_inv");
 }
+/* The invoke entry is `jmp [cell]` of the protection; the cell is resolved by the game's first invoke. The 1.1
+ * protection does not survive its code being patched (or the cell being entered from our stub before that), so
+ * once the cell is resolved its value is replaced (an aligned 4-byte data write): the entry jumps to InvStub
+ * with the game's own stack, and InvStub calls the resolved target. */
+static DWORD WINAPI InvWatch(LPVOID u)
+{
+    (void)u;
+    for (int n = 0; n < 20 * 60 * 30; n++) {
+        Sleep(50);
+        DWORD t = *(volatile DWORD *)0x2455570;
+        if (t == o_inv) continue;
+        o_inv = t;
+        DWORD prot;
+        if (!VirtualProtect((void *)0x2455570, 4, PAGE_READWRITE, &prot)) return 0;
+        LONG was = InterlockedCompareExchange((volatile LONG *)0x2455570, (LONG)(DWORD)InvStub, (LONG)t);
+        VirtualProtect((void *)0x2455570, 4, prot, &prot);
+        Log("DLC: engine invoke hooked%s (target %08lX)", was == (LONG)t ? "" : " FAILED", t);
+        return 0;
+    }
+    return 0;
+}
 static void DlcInit(void)
 {
     _snprintf(g_dlcWad, sizeof g_dlcWad, "%s\\DLC01.wad", g_contentDir);
@@ -467,8 +488,11 @@ static void DlcInit(void)
     if (Expect(0x6CF640, "56 8B 74 24 08")) WriteJmp(0x6CF640, StartStub, 5);
     if (g_dlcOn && *(DWORD *)0xBBC0EC == 0x60DE80) {   /* shell FSCommand handler (vtable slot) */
         o_FsCmd = (FsCmd_t)0x60DE80; WritePtr(0xBBC0EC, (void *)hk_FsCmd);
-        if (*(WORD *)0x61C550 == 0x25FF && *(DWORD *)0x61C552 == 0x2455570) { o_inv = *(DWORD *)0x2455570; WriteJmp(0x61C550, InvStub, 6); }
-        Log("DLC: shell hooks on (invoke %08lX)", o_inv);
+        if (*(WORD *)0x61C550 == 0x25FF && *(DWORD *)0x61C552 == 0x2455570) {
+            o_inv = *(DWORD *)0x2455570;
+            CloseHandle(CreateThread(NULL, 0, InvWatch, NULL, 0, NULL));
+        }
+        Log("DLC: shell hooks on");
     }
     if (Expect(0x4BFC70, "80 3D FC 5B 17 01 00")) { WriteJmp(0x4BFC70, DlcStub, 7); Log("DLC: %s (%s, script %s)", g_dlcOn ? "on" : "off", g_dlcWad, g_dlcScript); }
 }
@@ -485,6 +509,12 @@ static LONG CALLBACK CrashVeh(PEXCEPTION_POINTERS ep)
     Log("EXCEPTION %08lX at %08lX (addr %08lX rw %lu) eax=%08lX ebx=%08lX ecx=%08lX edx=%08lX esi=%08lX edi=%08lX ebp=%08lX esp=%08lX",
         c, x->Eip, (DWORD)ep->ExceptionRecord->ExceptionInformation[1], (DWORD)ep->ExceptionRecord->ExceptionInformation[0],
         x->Eax, x->Ebx, x->Ecx, x->Edx, x->Esi, x->Edi, x->Ebp, x->Esp);
+    {   /* the module the fault is in (drivers and system DLLs load anywhere) */
+        HMODULE m = NULL; char mn[MAX_PATH] = "?";
+        if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCSTR)x->Eip, &m) && m)
+            GetModuleFileNameA(m, mn, MAX_PATH);
+        Log("  in %s +%lX (thread %lu)", mn, m ? x->Eip - (DWORD)m : 0, GetCurrentThreadId());
+    }
     char buf[512]; int n = 0; DWORD *sp = (DWORD *)x->Esp;
     for (int i = 0; i < 256 && n < 480; i++) {
         MEMORY_BASIC_INFORMATION mi;
@@ -529,5 +559,8 @@ void ContentInit(void)
         WriteMem(0x5CB6C0, &j, 1); WriteMem(0x5CB6F5, &t, 1);
         Log("Content: promo outfits unlocked");
     } else Log("Content: promo outfit check mismatch");
+#ifdef M2R_SHOT
+    g_crashArmed = 1;                                     /* developer builds log from the start */
+#endif
     AddVectoredExceptionHandler(0, CrashVeh);
 }

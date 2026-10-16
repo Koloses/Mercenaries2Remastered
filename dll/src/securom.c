@@ -89,7 +89,7 @@ static DWORD WINAPI Watch(LPVOID u)
     return 0;
 }
 
-/* Ray collector constructor (thunk 0x6AEF70 -> jmp [0x245E84C] -> 0x3490000), used by every Havok ray cast of
+/* Ray collector constructor (thunk 0x6AEF70 -> jmp [0x245E84C] -> 0x3490000 in 1.0), used by every Havok ray cast of
  * FUN_00415670 / 0x413596 (line of sight, aiming, vehicles): base constructor, vtable, then one step that the
  * protection turned into virtual-machine bytecode run through its dispatcher (push 0x403056 / jmp 0x1AAFF10):
  * a quarter of the main thread's time in towns. The constructor only stores constants into the object, so they
@@ -97,7 +97,9 @@ static DWORD WINAPI Watch(LPVOID u)
  * were written; a third run with another pattern must match the prediction exactly), and from then on the
  * constructor just stores them. Any difference keeps the original. */
 #define CTOR_CELL 0x245E84C
-#define CTOR_ORIG 0x3490000
+#define CTOR_BASE 0x8CDE80                       /* the base constructor the protected code continues in */
+#define CTOR_VT   0xB6CB7C                       /* the vtable it stores */
+DWORD g_ctorOrig __attribute__((used));                         /* the protected code the cell leads to */
 #define CTOR_SPAN 0x200
 static volatile LONG g_ctorState;                 /* 0 not learned, 2 learning, 1 learned, -1 keep original */
 static BYTE g_ctorVal[CTOR_SPAN], g_ctorSet[CTOR_SPAN];
@@ -107,8 +109,7 @@ __attribute__((naked)) static void CallCtor(void)  /* eax = buffer */
     __asm__ volatile(
         "push %%esi\n\t" "push %%edi\n\t" "push %%ebx\n\t" "push %%ebp\n\t"
         "mov %%eax, %%esi\n\t"
-        "mov $0x3490000, %%eax\n\t"
-        "call *%%eax\n\t"
+        "call *_g_ctorOrig\n\t"
         "pop %%ebp\n\t" "pop %%ebx\n\t" "pop %%edi\n\t" "pop %%esi\n\t"
         "ret\n\t" ::: "memory");
 }
@@ -156,12 +157,48 @@ __attribute__((naked)) static void RayCtor(void)
         "cmpl $0, %0\n\t"
         "jne 1f\n\t"
         "pushal\n\t" "call %P1\n\t" "popal\n\t"
-        "1: push $0x3490000\n\t"
-        "ret\n\t"
+        "1: jmp *_g_ctorOrig\n\t"
         "2: mov %%esi, %%ecx\n\t"
         "call %P2\n\t"
         "mov %%esi, %%eax\n\t"
         "ret\n\t" :: "m"(g_ctorState), "i"(CtorLearn), "i"(CtorFast));
+}
+
+/* the cell leads to: mov ecx,esi / push T2 / push CTOR_BASE / ret, and T2: or eax,-1 / mov [esi],CTOR_VT / push ... */
+static int CtorHook(void)
+{
+    DWORD t = *(volatile DWORD *)CTOR_CELL;
+    if (!Expect(t, "8B CE 68 ?? ?? ?? ?? 68 ?? ?? ?? ?? C3") || *(DWORD *)(t + 8) != CTOR_BASE) return 0;
+    DWORD t2 = *(DWORD *)(t + 3);
+    if (!Expect(t2, "83 C8 FF C7 06 ?? ?? ?? ?? ??") || *(DWORD *)(t2 + 5) != CTOR_VT) return 0;
+    if (*(BYTE *)(t2 + 9) != 0x68) {   /* 1.1: the constructor is plain code (no virtual machine step): nothing to skip */
+        Log("securom: ray collector constructor is plain code in this build (%08lX), no hook needed", t);
+        return 1;
+    }
+    g_ctorOrig = t;
+    DWORD old; void *stub = (void *)RayCtor;
+    if (!VirtualProtect((void *)CTOR_CELL, 4, PAGE_READWRITE, &old)) return 0;
+    LONG prev = InterlockedCompareExchange((LONG *)CTOR_CELL, (LONG)(DWORD)stub, (LONG)t);
+    VirtualProtect((void *)CTOR_CELL, 4, old, &old);
+    if (prev != (LONG)t) return 0;
+    Log("securom: ray collector constructor hooked (%08lX)", t);
+    return 1;
+}
+static DWORD g_ctorLazy;
+static DWORD WINAPI CtorWatch(LPVOID u)
+{
+    (void)u;
+    int changes = 0;
+    for (int n = 0; n < 4 * 60 * 30; n++) {                 /* up to 30 minutes */
+        Sleep(250);
+        DWORD t = *(volatile DWORD *)CTOR_CELL;
+        if (t == g_ctorLazy) continue;
+        if (CtorHook()) return 0;
+        Log("securom: ray collector constructor cell -> %08lX (unexpected code)", t);
+        if (++changes == 3) { Log("securom: ray collector constructor kept"); return 0; }
+        g_ctorLazy = t;
+    }
+    return 0;
 }
 
 void SecuromInit(void)
@@ -173,15 +210,10 @@ void SecuromInit(void)
         WriteMem(0x49F714, mov, 7);
         Log("securom: forest decoder detour removed");
     } else Log("securom: forest decoder code mismatch, skipped");
-    /* Havok ray collector constructor */
-    if (*(DWORD *)CTOR_CELL == CTOR_ORIG && Expect(0x6AEF70, "FF 25 4C E8 45 02") &&
-        Expect(CTOR_ORIG, "8B CE 68 15 00 49 03 68 80 DE 8C 00 C3") && Expect(0x3490015, "83 C8 FF C7 06 7C CB B6 00 68 56 30 40 00")) {
-        DWORD old; void *stub = (void *)RayCtor;
-        if (VirtualProtect((void *)CTOR_CELL, 4, PAGE_READWRITE, &old)) {
-            InterlockedExchange((LONG *)CTOR_CELL, (LONG)(DWORD)stub);
-            VirtualProtect((void *)CTOR_CELL, 4, old, &old);
-            Log("securom: ray collector constructor hooked");
-        }
+    /* Havok ray collector constructor: in 1.0 the cell is already resolved (VM step, hooked); in 1.1 the protection resolves
+       it on the first ray cast (to plain code there, which needs no hook), so it is watched until then */
+    if (Expect(0x6AEF70, "FF 25 4C E8 45 02")) {
+        if (!CtorHook()) { g_ctorLazy = *(DWORD *)CTOR_CELL; CloseHandle(CreateThread(NULL, 0, CtorWatch, NULL, 0, NULL)); }
     } else Log("securom: ray collector constructor code mismatch, skipped");
     /* list every jmp [cell] in the game code whose cell lies in the protection's data */
     g_sites = (DWORD *)VirtualAlloc(NULL, 4 * 8192, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);

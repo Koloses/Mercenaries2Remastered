@@ -7,6 +7,8 @@ The sources address the 1.0 executable. A map file lists, for every game address
 (outside comments), the address in the other build:
     OLD NEW [note]                  hex, NEW = ???????? when the build has no equivalent (build fails)
     P "old pattern" "new pattern"   replacement of an Expect() byte pattern (when the code bytes differ)
+A11(0x...) marks an address of the 1.1 exe (code only for 1.1, inside #ifdef M2R_GAME11): left as is.
+A file with "m2r:no-retarget" in its first lines (data tables, shader bytecode) is copied unchanged.
 Usage: retarget.py MAPFILE SRCDIR OUTDIR"""
 import os, re, sys
 
@@ -34,8 +36,13 @@ def retarget(text, m, pats, name):
         if v not in m: missing.append('%s: %s not in the map' % (name, h)); return h
         if m[v] is None: missing.append('%s: %s has no equivalent' % (name, h)); return h
         return '0x%X' % m[v]
+    skip = 0                       # A11(0x...) is already a 1.1 address
     for t in TOK.finditer(text):
         s = t.group(0)
+        if s == 'A11': skip = 2
+        elif skip and s == '(': skip = 1
+        elif skip == 1 and re.match(r'0[xX][0-9A-Fa-f]+$', s): skip = 0; out.append(s); continue
+        elif not s.isspace(): skip = 0
         if s.startswith('//') or s.startswith('/*'): out.append(s); continue
         if s.startswith('"'):
             body = s[1:-1]
@@ -54,7 +61,7 @@ def main():
         p = os.path.join(src, f)
         if not os.path.isfile(p): continue
         data = open(p, encoding='latin-1').read()
-        if f.endswith(('.c', '.h')): data, miss = retarget(data, m, pats, f); bad += miss
+        if f.endswith(('.c', '.h')) and 'm2r:no-retarget' not in data[:400]: data, miss = retarget(data, m, pats, f); bad += miss
         open(os.path.join(dst, f), 'w', encoding='latin-1', newline='').write(data)
     if bad:
         print('\n'.join(bad), file=sys.stderr); sys.exit(1)

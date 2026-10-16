@@ -25,8 +25,8 @@ def image(path):
         n = min(rs, vs or rs); m[va:va + n] = d[ro:ro + n]
     return bytes(m)
 
-def expects(srcdir, f):
-    pp = subprocess.run(['i686-w64-mingw32-gcc', '-E', '-P', '-DM2R_SHOT', os.path.join(srcdir, f)],
+def expects(srcdir, f, *defs):
+    pp = subprocess.run(['i686-w64-mingw32-gcc', '-E', '-P', '-DM2R_SHOT', *defs, os.path.join(srcdir, f)],
                         capture_output=True, text=True).stdout
     return re.findall(r'\bExpect\s*\(\s*([^;]*?)\s*,\s*"([^"]*)"\s*\)', pp)
 
@@ -68,11 +68,23 @@ def main():
         p = os.path.join('src', f)
         if os.path.isfile(p):
             t = open(p, encoding='latin-1').read()
-            if f.endswith(('.c', '.h')): t, _ = retarget.retarget(t, m, pats, f)
+            if f.endswith(('.c', '.h')) and 'm2r:no-retarget' not in t[:400]: t, _ = retarget.retarget(t, m, pats, f)
             open(os.path.join(tmp, f), 'w', encoding='latin-1', newline='').write(t)
     bad = tot = 0
     for f in sorted(x for x in os.listdir('src') if x.endswith('.c')):
-        for (ea, pa), (eb, pb) in zip(expects('src', f), expects(tmp, f)):
+        A, C = expects('src', f), expects(tmp, f, '-DM2R_GAME11')
+        sm = __import__('difflib').SequenceMatcher(None, [p for _, p in A], [p for _, p in C], autojunk=False)
+        pairs = []
+        for tag, i1, i2, j1, j2 in sm.get_opcodes():
+            if tag in ('equal', 'replace') and i2 - i1 == j2 - j1: pairs += list(zip(A[i1:i2], C[j1:j2]))
+            else: pairs += [(a, None) for a in A[i1:i2]] + [(None, c) for c in C[j1:j2]]
+        for pa_, pc_ in pairs:
+            if pa_ is None:          # only in the 1.1 build
+                b = ev(pc_[0]); tot += 1
+                if b is None or not match(M1, b, pc_[1]): bad += 1; print('%s: 1.1-only Expect(%s, "%s") MISMATCH' % (f, pc_[0], pc_[1]))
+                continue
+            if pc_ is None: continue
+            (ea, pa), (eb, pb) = pa_, pc_
             a, b = ev(ea), ev(eb)
             if a is None or b is None: continue
             tot += 1

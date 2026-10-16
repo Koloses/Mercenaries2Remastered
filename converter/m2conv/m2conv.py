@@ -118,7 +118,9 @@ def st_pcdb(a, cfg):
     if not os.path.exists(cfg.w('hkclasses.pkl')):
         import hkreflect
         progress('pcdb', 0.0, 'Havok class tables from Mercenaries2.exe')
-        hkreflect.build(os.path.join(a.game, 'Mercenaries2.exe'), cfg.w('hkclasses.pkl'))
+        if hkreflect.build(os.path.join(a.game, 'Mercenaries2.exe'), cfg.w('hkclasses.pkl')) < 1000:
+            os.remove(cfg.w('hkclasses.pkl'))
+            raise Fail('no Havok class tables found in Mercenaries2.exe (not a supported exe build?)')
     while True:
         done, n, tot = pcdb.build(limit=a.limit if a.limit else 1e9)
         progress('pcdb', n / max(1, tot), '%d/%d' % (n, tot))
