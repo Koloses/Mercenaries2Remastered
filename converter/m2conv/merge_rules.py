@@ -2,12 +2,14 @@
 # Licensed under the GNU GPL version 3 or later with an additional permission (see LICENSE, LICENSE-EXCEPTION).
 """Manual resolutions for Lua merges: module -> rules"""
 RULES = {
- 'dlc01_mrxguipda': {'main': 'theirs', 'prepend_import': [b'MrxGui']},
+ 'dlc01_mrxguipda': {'main': 'theirs', 'prepend_import': [b'MrxGui'],
+                     # transit screen in the Xbox 850x720 box (PC: full screen, ExactFit stretches it 1.5x)
+                     'fn': {b'OpenTransitInterface': 'th'}},
  'dlc_mrxguidialogbox': {'main': 'theirs'},
     # the DLC pause screen lacks the PC port's flash event handlers (options, PauseItemChanged ...): without them
     # the pause menu's settings are never loaded or reverted and every resume asks "Accept changes?"
     'mrxguipausescreen': {'graft': {b'_FinishPauseOpen': (b'SetFlashPauseMenu', b'SetFlashEventHandler')}},
-    'mrxguipda': {'main': 'theirs', 'prepend_import': [b'MrxGui']},
+    'mrxguipda': {'main': 'theirs', 'prepend_import': [b'MrxGui'], 'fn': {b'OpenTransitInterface': 'th'}},
     'mrxmultipagemenu': {'fn': {b'_ChooseOption': 'pc', b'_Display': 'pc'},
                          'kpatch': {b'_ChooseOption': {b'Previous page': b'[Patch2.GUI.PrevPage]', b'Next page': b'[Patch2.GUI.NextPage]'},
                                     b'_Display': {b'Previous page': b'[Patch2.GUI.PrevPage]', b'Next page': b'[Patch2.GUI.NextPage]'}}},
